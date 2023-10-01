@@ -1,27 +1,33 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"net/http"
 
 	"github.com/anthonyhungnguyen276/weather-app/api"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	city := "Windsor"
-	latlong, err := api.GetLatLong(city)
 
-	if err != nil {
-		log.Fatalf("failed to get latlong: %s", err)
-	}
+	r := gin.Default()
 
-	fmt.Printf("Latitude %f, Longitude: %f\n", latlong.Latitude, latlong.Longitude)
+	r.GET("/weather", func(c *gin.Context) {
+		city := c.Query("city")
+		latlong, err := api.GetLatLong(city)
 
-	weather, err := api.GetWeather(latlong)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 
-	if err != nil {
-		log.Fatalf("failed to get weather: %s\n", err)
-	}
+		weather, err := api.GetWeather(latlong)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 
-	fmt.Printf("Weather: %s", weather)
+		c.JSON(http.StatusOK, gin.H{"weather": weather})
+	})
+
+	r.Run()
 }

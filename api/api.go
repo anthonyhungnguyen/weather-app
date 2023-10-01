@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 
@@ -36,21 +35,21 @@ func GetLatLong(city string) (*types.LatLong, error) {
 	return &response.Results[0], nil
 }
 
-func GetWeather(latLong *types.LatLong) (string, error) {
+func GetWeather(latLong *types.LatLong) (*types.WeatherResponse, error) {
 	endpoint := fmt.Sprintf(utils.GetEnv("WEATHER_API_URL"), latLong.Latitude, latLong.Longitude)
 	resp, err := http.Get(endpoint)
 
 	if err != nil {
-		return "", fmt.Errorf("cannot making request to WeatherAPI: %w", err)
+		return nil, fmt.Errorf("cannot making request to WeatherAPI: %w", err)
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	var response types.WeatherResponse
 
-	if err != nil {
-		return "", fmt.Errorf("cannot read weather response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("error decoding weather response: %w", err)
 	}
 
-	return string(body), nil
+	return &response, nil
 
 }
