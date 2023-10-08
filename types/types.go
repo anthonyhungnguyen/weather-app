@@ -28,3 +28,13 @@ type WeatherResponse struct {
 		Temperature2M []float64 `json:"temperature_2m"`
 	} `json:"hourly"`
 }
+
+type WeatherDisplay struct {
+	City      string
+	Forecasts []Forecast
+}
+
+type Forecast struct {
+	Date        string
+	Temperature string
+}

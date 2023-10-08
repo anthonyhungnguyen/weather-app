@@ -1,0 +1,28 @@
+version: '3'
+services:
+    postgres:
+        image: postgres:16-alpine
+        restart: always
+        environment:
+            POSTGRES_USER: forecast
+            POSTGRES_PASSWORD: forecast
+            POSTGRES_DB: forecast
+            POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+        ports:
+            - '5432:5432'
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+            - ${PWD}/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    pgadmin:
+        image: dpage/pgadmin4
+        restart: always
+        environment:
+            PGADMIN_DEFAULT_EMAIL: annthonyhungnguyen276@gmail.com
+            PGADMIN_DEFAULT_PASSWORD: postgres
+        ports:
+            - '5050:80'
+        volumes:
+            - pgadmin-data:/var/lib/pgadmin
+volumes:
+    pgadmin-data:
+    postgres-data:
