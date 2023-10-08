@@ -31,15 +31,21 @@ func QueryWeatherByCity(db *sqlx.DB, city string, c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	c.HTML(http.StatusOK, "weather.html", weatherDisplay)
+	c.JSON(http.StatusOK, gin.H{"weather": weatherDisplay})
+}
 
-	// c.JSON(http.StatusOK, gin.H{"weather": weather})
+func GetLastSearchedCities(db *sqlx.DB) ([]string, error) {
+	var cities []string
+	err := db.Select(&cities, "SELECT name FROM cities ORDER BY id DESC LIMIT 10")
+	if err != nil {
+		return nil, err
+	}
+	return cities, nil
 }
 
 func main() {
 
 	r := gin.Default()
-	r.LoadHTMLGlob("views/*")
 	db, err := sqlx.Connect("postgres", utils.GetEnv("DATABASE_URL"))
 
 	if err != nil {
@@ -56,8 +62,16 @@ func main() {
 		QueryWeatherByCity(db, city, c)
 	})
 
-	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", nil)
+	r.GET("/stats", gin.BasicAuth(gin.Accounts{
+		"forecast": "forecast",
+	}), func(c *gin.Context) {
+		cities, err := GetLastSearchedCities(db)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"stats": cities})
 	})
 
 	r.Run()
